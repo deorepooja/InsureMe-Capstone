@@ -1,0 +1,71 @@
+---
+- name: InsureMe EC2 Node Setup
+  hosts: insureme_nodes
+  become: yes
+
+  vars:
+    docker_version: "20.10.24"
+
+  tasks:
+
+    - name: Update APT packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - gnupg
+          - lsb-release
+          - git
+          - unzip
+        state: present
+
+    - name: Add Docker GPG key
+      shell: curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+      args:
+        warn: false
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu focal stable
+        state: present
+        filename: docker
+
+    - name: Install Docker Engine
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+        state: present
+
+    - name: Add user to docker group
+      user:
+        name: "{{ ansible_user }}"
+        groups: docker
+        append: yes
+
+    - name: Enable and start Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Install Java (OpenJDK 17)
+      apt:
+        name: openjdk-17-jdk
+        state: present
+
+    - name: Print Docker and Java Versions
+      shell: |
+        docker --version
+        java -version
+      register: version_output
+
+    - debug:
+        var: version_output.stdout_lines

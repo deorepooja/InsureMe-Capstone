@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: insureme-app-deployment
+  labels:
+    app: insureme
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: insureme
+  template:
+    metadata:
+      labels:
+        app: insureme
+    spec:
+      containers:
+        - name: insureme-container
+          image: deorepooja/insureme-app:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: "prod"
